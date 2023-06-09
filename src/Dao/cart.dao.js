@@ -1,3 +1,4 @@
+import { logger } from "../utils/logger.js";
 import cartModel from "./Mongo/models/cart.model.js";
 
 class CartMongoDao {
@@ -10,7 +11,7 @@ class CartMongoDao {
         designs: [],
       };
       const newCart = await cartModel.create(newCartData);
-      console.log(newCart);
+      logger.info(`new cart Id${newCart}`);
       return newCart;
     } catch (error) {
       return error;
@@ -21,10 +22,10 @@ class CartMongoDao {
   async deleteCart(cartId) {
     try {
       const chkCart = await this.getCart(cartId);
-      console.log(chkCart);
+      logger.info(`carrito borrado${chkCart}`);
       if (chkCart) {
         const cartToDelete = await cartModel.findByIdAndDelete(cartId);
-        console.log("carrito eliminado");
+        logger.warning("carrito eliminado");
         return cartToDelete;
       } else {
         return "cart not found";
@@ -38,12 +39,10 @@ class CartMongoDao {
   async getCart(cartId) {
     try {
       if (cartId) {
-        console.log("paso por donde necesito");
         const oneCart = await cartModel
           .findById({ _id: `${cartId}` })
           .populate("designs.design")
           .lean();
-        console.log(oneCart);
         return oneCart;
       } else {
         const allCarts = await cartModel.find();
@@ -79,7 +78,7 @@ class CartMongoDao {
   //clear cart
   async clearCart(cartId) {
     try {
-      console.log(cartId);
+      logger.warn(`carrito a borrar${cartId}`);
       let cartToClear = await cartModel.updateOne(
         { _id: `${cartId}` },
         { $pull: { designs: {} } }
@@ -92,17 +91,22 @@ class CartMongoDao {
   }
 
   //eliminar producto del carrito
-  async deleteDesign(cartId, designId){
+  async deleteDesign(cartId, designId) {
     try {
-      console.log(designId);
       let prodToDelete = await cartModel.updateOne(
-        {_id : cartId},
-        { $pull: {designs:{design: designId}}}
+        { _id: cartId },
+        { $pull: { designs: { design: designId } } }
       );
-      return prodToDelete; 
+      return prodToDelete;
     } catch (error) {
       throw new Error(error);
     }
+  }
+
+  //actualizar info del carrito pendiente a futuro
+  async updateCart(cartId, designId, newQuantity) {
+    let designToUpdate = await cartModel.updateOne({ _id: cartId }, []);
+    return designToUpdate;
   }
 }
 
