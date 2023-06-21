@@ -61,9 +61,35 @@ export const login = async (email, password) => {
   return userToLog;
 };
 
-export const getUserToken = () =>{
+export const getUserToken = (req, res) => {
   let token = req.cookies[options.server.cookieToken];
   passport.authenticate("jwt", { session: false });
   const info = jwt.verify(token, options.server.secretToken);
+  console.log(userData.cart[0]._id);
   return info;
+}
+
+export const chkUserMail = async (email) => {
+  const userToChk = await userManager.getUserByEmail(email);
+  if (!userToChk) {
+    logger.warning("No existe el correo");
+    return false
+  } else {
+    logger.info("si existe el correo");
+    return userToChk
+  }
+}
+
+export const updatePass = async (email, newPassword) => {
+  console.log(email);
+  const userData = await chkUserMail(email);
+  console.log(userData);
+  if (userData) {
+    const UpdatedUserData = {
+      ...userData._doc,
+      password: createHash(newPassword)
+    };
+    const updatedDataToPush = await userManager.updateUserPass(email, UpdatedUserData);
+    return updatedDataToPush
+  }
 }
